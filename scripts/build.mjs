@@ -22,4 +22,3 @@ const staticFiles = [
 
 await Promise.all(staticFiles.map((file) => cp(resolve(projectRoot, file), resolve(outputDirectory, file))));
 await cp(resolve(projectRoot, 'assets'), resolve(outputDirectory, 'assets'), { recursive: true });
-
