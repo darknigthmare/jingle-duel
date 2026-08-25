@@ -1,0 +1,16 @@
+{
+  "name": "Jingle Duel",
+  "short_name": "Jingle Duel",
+  "description": "Écoute un jingle, reproduis-le au micro et obtiens un score détaillé.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080a16",
+  "theme_color": "#090b18",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

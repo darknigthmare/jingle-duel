@@ -1,0 +1,5 @@
+.vercel/
+.edge-*/
+.qa-*
+node_modules/
+npm-debug.log*
