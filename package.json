@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Écoute un jingle, reproduis-le au micro et obtiens un score détaillé.",
   "scripts": {
+    "build": "node scripts/build.mjs",
     "check": "node --check app.js && node --check server.mjs && node --check service-worker.js",
     "test": "npm run check",
     "start": "node server.mjs",
