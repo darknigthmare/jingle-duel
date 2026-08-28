@@ -1,14 +1,15 @@
 {
   "name": "jingle-duel",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "Écoute un jingle, reproduis-le au micro et obtiens un score détaillé.",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check service-worker.js",
-    "test": "npm run check",
-    "start": "node server.mjs",
+    "check": "node --check app.js && node --check game-core.js && node --check analysis-worker.js && node --check server.mjs && node --check service-worker.js && node --check scripts/build.mjs",
+    "test": "npm run build && npm run check && node --test",
+    "qa": "npm test",
+    "start": "npm run build && node server.mjs",
     "preview": "node server.mjs"
   },
   "engines": {

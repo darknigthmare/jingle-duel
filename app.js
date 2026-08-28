@@ -1,3 +1,12 @@
+import {
+  analyzeSamples,
+  buildPresetProfile,
+  buildProfileFromFrames,
+  compareProfiles,
+  detectPitch,
+  gradeForScore
+} from './game-core.js';
+
 (() => {
   'use strict';
 
@@ -18,6 +27,7 @@
       lineTwo: 'SPARK',
       kicker: 'AUDIO SYSTEM',
       accent: '#60f4ff',
+      rival: { name: 'NOVA', base: 70 },
       duration: 2.45,
       notes: [
         { start: 0.18, duration: 0.30, frequency: 293.66, syllable: 'AR' },
@@ -38,6 +48,7 @@
       lineTwo: 'BLOOM',
       kicker: 'DEEP SPACE AUDIO',
       accent: '#a67cff',
+      rival: { name: 'ORION', base: 73 },
       duration: 3.05,
       notes: [
         { start: 0.20, duration: 0.48, frequency: 220.00, syllable: 'COS' },
@@ -57,6 +68,7 @@
       lineTwo: 'PULSE',
       kicker: 'BOOT SEQUENCE',
       accent: '#ff7fbc',
+      rival: { name: 'VEX', base: 75 },
       duration: 2.15,
       notes: [
         { start: 0.15, duration: 0.22, frequency: 392.00, syllable: 'RE' },
@@ -64,6 +76,69 @@
         { start: 0.73, duration: 0.42, frequency: 466.16, syllable: 'PU' },
         { start: 1.26, duration: 0.22, frequency: 587.33, syllable: 'L' },
         { start: 1.54, duration: 0.42, frequency: 783.99, syllable: 'SE' }
+      ]
+    },
+    {
+      id: 'neon-strike',
+      kind: 'synth',
+      title: 'Neon Strike',
+      subtitle: 'Deux impacts, une réponse brillante et précise.',
+      label: 'NEON / IMPACT',
+      monogram: 'NS',
+      lineOne: 'NEON',
+      lineTwo: 'STRIKE',
+      kicker: 'NIGHT FREQUENCY',
+      accent: '#79ff9f',
+      rival: { name: 'LYRA', base: 78 },
+      duration: 2.65,
+      notes: [
+        { start: 0.16, duration: 0.34, frequency: 261.63, syllable: 'NE' },
+        { start: 0.58, duration: 0.24, frequency: 392.00, syllable: 'ON' },
+        { start: 1.04, duration: 0.46, frequency: 329.63, syllable: 'STRI' },
+        { start: 1.62, duration: 0.72, frequency: 659.25, syllable: 'KE' }
+      ]
+    },
+    {
+      id: 'velvet-orbit',
+      kind: 'synth',
+      title: 'Velvet Orbit',
+      subtitle: 'Une boucle chaude qui retombe avec élégance.',
+      label: 'SOUL / ORBITAL',
+      monogram: 'VO',
+      lineOne: 'VELVET',
+      lineTwo: 'ORBIT',
+      kicker: 'GRAVITY SESSION',
+      accent: '#ffb56b',
+      rival: { name: 'SOL', base: 80 },
+      duration: 3.35,
+      notes: [
+        { start: 0.18, duration: 0.50, frequency: 349.23, syllable: 'VEL' },
+        { start: 0.76, duration: 0.44, frequency: 440.00, syllable: 'VET' },
+        { start: 1.30, duration: 0.50, frequency: 523.25, syllable: 'OR' },
+        { start: 1.88, duration: 0.42, frequency: 440.00, syllable: 'BI' },
+        { start: 2.40, duration: 0.66, frequency: 293.66, syllable: 'T' }
+      ]
+    },
+    {
+      id: 'prism-run',
+      kind: 'synth',
+      title: 'Prism Run',
+      subtitle: 'Une course chromatique réservée aux duellistes précis.',
+      label: 'PRISM / TECHNIQUE',
+      monogram: 'PR',
+      lineOne: 'PRISM',
+      lineTwo: 'RUN',
+      kicker: 'SPECTRUM RACING',
+      accent: '#ffe66d',
+      rival: { name: 'ECHO', base: 83 },
+      duration: 2.95,
+      notes: [
+        { start: 0.14, duration: 0.24, frequency: 329.63, syllable: 'PRI' },
+        { start: 0.43, duration: 0.24, frequency: 392.00, syllable: 'SM' },
+        { start: 0.72, duration: 0.24, frequency: 466.16, syllable: 'R' },
+        { start: 1.01, duration: 0.24, frequency: 554.37, syllable: 'U' },
+        { start: 1.35, duration: 0.36, frequency: 659.25, syllable: 'N' },
+        { start: 1.86, duration: 0.78, frequency: 493.88, syllable: '!' }
       ]
     }
   ];
@@ -87,9 +162,22 @@
     openStudioButton: $('#openStudioButton'),
     clearHistoryButton: $('#clearHistoryButton'),
     soundToggle: $('#soundToggle'),
+    networkStatus: $('#networkStatus'),
+    installButton: $('#installButton'),
+    profileLevel: $('#profileLevel'),
+    profileLevelLabel: $('#profileLevelLabel'),
+    xpTrack: $('#xpTrack'),
+    xpBar: $('#xpBar'),
+    xpLabel: $('#xpLabel'),
+    profileWins: $('#profileWins'),
+    profileStreak: $('#profileStreak'),
+    profileDuels: $('#profileDuels'),
+    profileMasteries: $('#profileMasteries'),
     challengeTitle: $('#challengeTitle'),
     challengeSubtitle: $('#challengeSubtitle'),
     challengeDuration: $('#challengeDuration'),
+    rivalName: $('#rivalName'),
+    rivalTarget: $('#rivalTarget'),
     performanceStage: $('#performanceStage'),
     animatedWordmark: $('#animatedWordmark'),
     wordmarkKicker: $('#wordmarkKicker'),
@@ -108,6 +196,11 @@
     resultPanel: $('#resultPanel'),
     playReferenceButton: $('#playReferenceButton'),
     startAttemptButton: $('#startAttemptButton'),
+    attemptAudioInput: $('#attemptAudioInput'),
+    fileAttemptLabel: $('#fileAttemptLabel'),
+    micError: $('#micError'),
+    micErrorTitle: $('#micErrorTitle'),
+    micErrorMessage: $('#micErrorMessage'),
     stopRecordingButton: $('#stopRecordingButton'),
     recordState: $('#recordState'),
     recordTimer: $('#recordTimer'),
@@ -117,6 +210,8 @@
     gradeChip: $('#gradeChip'),
     resultTitle: $('#resultTitle'),
     resultMessage: $('#resultMessage'),
+    duelOutcome: $('#duelOutcome'),
+    xpReward: $('#xpReward'),
     bestResult: $('#bestResult'),
     melodyScore: $('#melodyScore'),
     rhythmScore: $('#rhythmScore'),
@@ -143,13 +238,21 @@
     toast: $('#toast')
   };
 
+  const SAVE_KEY = 'jingle-duel-save-v2';
+  const persistedSave = loadGameSave();
+
   const state = {
     audioContext: null,
     currentChallenge: presets[0],
     referenceProfile: null,
-    difficulty: 'normal',
+    difficulty: persistedSave.preferences.difficulty,
     hasListened: false,
-    uiMuted: false,
+    uiMuted: persistedSave.preferences.uiMuted,
+    flowId: 0,
+    playbackId: 0,
+    importId: 0,
+    activeAttempt: null,
+    deferredInstallPrompt: null,
     activeReferenceNodes: [],
     activeTimers: [],
     mediaStream: null,
@@ -171,65 +274,189 @@
     pendingLogoUrl: null,
     customLogoUrl: null,
     toastTimer: 0,
-    history: loadHistory()
+    history: persistedSave.history,
+    profile: persistedSave.profile
   };
 
-  function loadHistory() {
+  function defaultProfile() {
+    return { xp: 0, wins: 0, duels: 0, streak: 0, bests: {} };
+  }
+
+  function safeInteger(value, min = 0, max = 10_000_000) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? clamp(Math.round(numeric), min, max) : min;
+  }
+
+  function sanitizeHistoryItem(item) {
+    if (!item || typeof item !== 'object') return null;
+    const score = Number(item.score);
+    if (!Number.isFinite(score)) return null;
+    const timestamp = new Date(item.timestamp);
+    if (Number.isNaN(timestamp.getTime())) return null;
+    const normalizedScore = safeInteger(score, 0, 100);
+    const title = String(item.title || 'Jingle').slice(0, 50);
+    const migratedPreset = presets.find((preset) => preset.title.toLocaleLowerCase('fr-FR') === title.trim().toLocaleLowerCase('fr-FR'));
+    const challengeId = String(item.challengeId || migratedPreset?.id || 'legacy').slice(0, 80);
+    const grade = /^[SABCDE]$/.test(String(item.grade || '')) ? String(item.grade) : gradeForScore(normalizedScore);
+    const difficultyKey = Object.hasOwn(difficultySettings, item.difficultyKey)
+      ? item.difficultyKey
+      : Object.entries(difficultySettings).find(([, settings]) => settings.label === item.difficulty)?.[0] || 'normal';
+    const metric = (name) => safeInteger(item.metrics?.[name] ?? item[name], 0, 100);
+    return {
+      title,
+      challengeId,
+      score: normalizedScore,
+      grade,
+      difficultyKey,
+      difficulty: difficultySettings[difficultyKey].label,
+      timestamp: timestamp.toISOString(),
+      mode: item.mode === 'upload' ? 'upload' : 'microphone',
+      target: safeInteger(item.target, 0, 100),
+      won: Boolean(item.won),
+      metrics: {
+        melody: metric('melody'),
+        rhythm: metric('rhythm'),
+        timing: metric('timing'),
+        clarity: metric('clarity')
+      }
+    };
+  }
+
+  function sanitizeProfile(value, history) {
+    const source = value && typeof value === 'object' ? value : {};
+    const bests = {};
+    if (source.bests && typeof source.bests === 'object') {
+      Object.entries(source.bests).forEach(([key, score]) => {
+        const cleanKey = String(key).slice(0, 120);
+        const [challengeId, difficulty] = cleanKey.split('::');
+        if (
+          isOfficialChallengeId(challengeId) &&
+          Object.hasOwn(difficultySettings, difficulty) &&
+          cleanKey === bestKey(challengeId, difficulty)
+        ) {
+          bests[cleanKey] = safeInteger(score, 0, 100);
+        }
+      });
+    }
+    history.forEach((item) => {
+      if (!isOfficialChallengeId(item.challengeId)) return;
+      const key = bestKey(item.challengeId, item.difficultyKey);
+      bests[key] = Math.max(bests[key] ?? 0, item.score);
+    });
+    return {
+      xp: safeInteger(source.xp),
+      wins: safeInteger(source.wins, 0, 100_000),
+      duels: safeInteger(source.duels, history.length, 100_000),
+      streak: safeInteger(source.streak, 0, 100_000),
+      bests
+    };
+  }
+
+  function readStoredJson(key, fallback) {
     try {
-      const parsed = JSON.parse(localStorage.getItem('jingle-duel-history') || '[]');
-      return Array.isArray(parsed) ? parsed.slice(0, 12) : [];
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch {
-      return [];
+      return fallback;
     }
   }
 
-  function saveHistory() {
+  function loadGameSave() {
+    const modern = readStoredJson(SAVE_KEY, null);
+    const legacy = Array.isArray(modern?.history)
+      ? []
+      : readStoredJson('jingle-duel-history', []);
+    const rawHistory = Array.isArray(modern?.history)
+      ? modern.history
+      : (Array.isArray(legacy) ? legacy : []);
+    const history = rawHistory.map(sanitizeHistoryItem).filter(Boolean).slice(0, 50);
+    const difficulty = Object.hasOwn(difficultySettings, modern?.preferences?.difficulty)
+      ? modern.preferences.difficulty
+      : 'normal';
+    return {
+      history,
+      profile: sanitizeProfile(modern?.profile, history),
+      preferences: { difficulty, uiMuted: Boolean(modern?.preferences?.uiMuted) }
+    };
+  }
+
+  function saveGame() {
     try {
-      localStorage.setItem('jingle-duel-history', JSON.stringify(state.history.slice(0, 12)));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        version: 2,
+        history: state.history.slice(0, 50),
+        profile: state.profile,
+        preferences: { difficulty: state.difficulty, uiMuted: state.uiMuted }
+      }));
     } catch {
       // Storage can be disabled in private contexts; the app remains fully usable.
     }
   }
 
+  const saveHistory = saveGame;
+
   function formatDuration(seconds) {
     return `${seconds.toFixed(1).replace('.', ',')} s`;
   }
 
-  function frequencyToMidi(frequency) {
-    return 69 + 12 * Math.log2(frequency / 440);
+  function rivalTargetFor(challenge, difficulty = state.difficulty) {
+    const base = safeInteger(challenge.rival?.base ?? 68, 35, 92);
+    const modifier = difficulty === 'relaxed' ? -10 : difficulty === 'expert' ? 10 : 0;
+    return clamp(base + modifier, 35, 96);
   }
 
-  function percentile(values, ratio) {
-    if (!values.length) return 0;
-    const sorted = [...values].sort((a, b) => a - b);
-    const position = clamp(Math.floor((sorted.length - 1) * ratio), 0, sorted.length - 1);
-    return sorted[position];
+  function bestKey(challengeId, difficulty) {
+    return `${String(challengeId)}::${String(difficulty)}`;
   }
 
-  function median(values) {
-    if (!values.length) return null;
-    const sorted = [...values].sort((a, b) => a - b);
-    const middle = Math.floor(sorted.length / 2);
-    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  function isOfficialChallengeId(challengeId) {
+    return presets.some((preset) => preset.id === challengeId);
   }
 
-  function mean(values) {
-    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+  function levelForXp(xp) {
+    return Math.floor(Math.sqrt(Math.max(0, xp) / 120)) + 1;
+  }
+
+  function xpFloorForLevel(level) {
+    return Math.pow(Math.max(0, level - 1), 2) * 120;
+  }
+
+  function renderProgress() {
+    const level = levelForXp(state.profile.xp);
+    const floor = xpFloorForLevel(level);
+    const ceiling = xpFloorForLevel(level + 1);
+    const withinLevel = state.profile.xp - floor;
+    const levelSpan = Math.max(1, ceiling - floor);
+    const percentage = clamp(Math.round((withinLevel / levelSpan) * 100), 0, 100);
+    refs.profileLevel.textContent = level;
+    refs.profileLevelLabel.textContent = level;
+    refs.xpBar.style.width = `${percentage}%`;
+    refs.xpTrack.setAttribute('aria-valuenow', String(percentage));
+    refs.xpLabel.textContent = `${Math.max(0, ceiling - state.profile.xp)} XP avant le niveau suivant`;
+    refs.profileWins.textContent = state.profile.wins;
+    refs.profileStreak.textContent = state.profile.streak;
+    refs.profileDuels.textContent = state.profile.duels;
+    refs.profileMasteries.textContent = Object.values(state.profile.bests).filter((score) => score >= 85).length;
   }
 
   function renderChallengeCards() {
-    refs.challengeGrid.innerHTML = presets.map((preset) => `
-      <button class="challenge-card" type="button" data-challenge="${preset.id}" style="--card-accent:${preset.accent}">
+    refs.challengeGrid.innerHTML = presets.map((preset) => {
+      const best = state.profile.bests[bestKey(preset.id, state.difficulty)];
+      const target = rivalTargetFor(preset);
+      return `
+      <button class="challenge-card" type="button" data-challenge="${preset.id}" style="--card-accent:${preset.accent}" aria-label="${escapeHtml(preset.title)}, rival ${escapeHtml(preset.rival.name)}, objectif ${target}">
         <div class="card-art">
           <span class="card-play" aria-hidden="true">▶</span>
           <span class="card-monogram">${preset.monogram}</span>
+          <span class="card-mastery">${best === undefined ? 'NOUVEAU' : `RECORD ${best}`}</span>
         </div>
         <div class="card-copy">
           <div><small>${preset.label}</small><strong>${preset.title}</strong></div>
-          <span class="card-meta">${preset.notes.length} notes · ${formatDuration(preset.duration)}</span>
+          <span class="card-meta">${preset.notes.length} notes · ${formatDuration(preset.duration)}<b>${preset.rival.name} · ${target}</b></span>
         </div>
       </button>
-    `).join('');
+    `;
+    }).join('');
 
     $$('[data-challenge]', refs.challengeGrid).forEach((button) => {
       button.addEventListener('click', () => {
@@ -240,7 +467,8 @@
   }
 
   function renderHistory() {
-    const best = state.history.length ? Math.max(...state.history.map((item) => item.score)) : null;
+    const savedBests = Object.values(state.profile.bests).filter(Number.isFinite);
+    const best = savedBests.length ? Math.max(...savedBests) : null;
     refs.headerBest.textContent = best === null ? '—' : best;
     refs.historySection.hidden = state.history.length === 0;
     refs.historyList.innerHTML = state.history.slice(0, 8).map((item) => {
@@ -249,13 +477,14 @@
         ? ''
         : new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
       return `
-        <div class="history-item">
-          <div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.difficulty)} · ${label}</small></div>
+        <li class="history-item">
+          <div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.difficulty)} · ${item.mode === 'upload' ? 'fichier audio' : 'micro'} · ${label}</small></div>
           <span class="history-grade">${escapeHtml(item.grade)}</span>
-          <span class="history-score">${item.score}</span>
-        </div>
+          <span class="history-score" aria-label="${item.score} sur 100">${escapeHtml(item.score)}</span>
+        </li>
       `;
     }).join('');
+    renderProgress();
   }
 
   function escapeHtml(value) {
@@ -267,15 +496,42 @@
       .replaceAll("'", '&#039;');
   }
 
-  function showScreen(screen) {
-    [refs.homeScreen, refs.challengeScreen].forEach((item) => item.classList.toggle('active', item === screen));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function scrollToTop() {
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+
+  function showScreen(screen, focusTarget = null) {
+    [refs.homeScreen, refs.challengeScreen].forEach((item) => {
+      const active = item === screen;
+      item.classList.toggle('active', active);
+      item.hidden = !active;
+    });
+    scrollToTop();
+    const target = focusTarget || (screen === refs.homeScreen ? $('#homeTitle') : refs.challengeTitle);
+    if (target) {
+      target.setAttribute('tabindex', '-1');
+      requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    }
+  }
+
+  function setDifficultyLocked(locked) {
+    $$('.difficulty-control button').forEach((button) => { button.disabled = locked; });
+  }
+
+  function invalidateFlow() {
+    state.flowId += 1;
+    state.playbackId += 1;
+    state.activeAttempt = null;
+    setDifficultyLocked(false);
   }
 
   function goHome() {
+    invalidateFlow();
     stopReference();
     stopAttemptPlayback();
     stopMicrophoneSession();
+    refs.micError.hidden = true;
     showScreen(refs.homeScreen);
     renderHistory();
   }
@@ -285,6 +541,7 @@
   }
 
   function startChallenge(challenge) {
+    invalidateFlow();
     stopReference();
     stopAttemptPlayback();
     stopMicrophoneSession();
@@ -297,6 +554,8 @@
     refs.challengeTitle.textContent = challenge.title;
     refs.challengeSubtitle.textContent = challenge.subtitle || 'Ton jingle personnalisé.';
     refs.challengeDuration.textContent = formatDuration(challenge.duration);
+    refs.rivalName.textContent = challenge.rival?.name || 'STUDIO';
+    refs.rivalTarget.textContent = rivalTargetFor(challenge);
     refs.wordmarkKicker.textContent = challenge.kicker || 'CUSTOM AUDIO';
     refs.wordmarkLineOne.textContent = challenge.lineOne || challenge.title.toUpperCase().split(' ')[0] || 'MON';
     refs.wordmarkLineTwo.textContent = challenge.lineTwo || challenge.title.toUpperCase().split(' ').slice(1).join(' ') || 'JINGLE';
@@ -320,11 +579,16 @@
     state.hasListened = false;
     state.lastResult = null;
     refs.startAttemptButton.disabled = true;
+    refs.attemptAudioInput.disabled = true;
+    refs.fileAttemptLabel.classList.add('disabled');
+    refs.fileAttemptLabel.setAttribute('aria-disabled', 'true');
+    refs.micError.hidden = true;
     refs.playReferenceButton.disabled = false;
     refs.listenPanel.hidden = false;
     refs.recordPanel.hidden = true;
     refs.analysisPanel.hidden = true;
     refs.resultPanel.hidden = true;
+    refs.compareButton.disabled = false;
     refs.micOrb.hidden = true;
     refs.countdown.hidden = true;
     refs.performanceStage.classList.remove('playing', 'recording');
@@ -348,7 +612,8 @@
       const index = order.indexOf(step.dataset.step);
       step.classList.toggle('active', index === activeIndex);
       step.classList.toggle('complete', index < activeIndex);
-      step.disabled = index > activeIndex;
+      if (index === activeIndex) step.setAttribute('aria-current', 'step');
+      else step.removeAttribute('aria-current');
     });
   }
 
@@ -384,9 +649,15 @@
     }
   }
 
-  async function playReference({ markListened = true } = {}) {
+  async function playReference({ markListened = true, playbackId = null } = {}) {
+    const requestId = playbackId ?? ++state.playbackId;
+    const flowId = state.flowId;
+    const challenge = state.currentChallenge;
     try {
       const context = await getAudioContext();
+      if (requestId !== state.playbackId || flowId !== state.flowId || challenge !== state.currentChallenge) {
+        return false;
+      }
       stopReference();
       stopAttemptPlayback();
       refs.playReferenceButton.disabled = true;
@@ -396,29 +667,39 @@
       refs.performanceStage.classList.add('playing');
       refs.stageStatus.textContent = 'Écoute de la référence…';
 
-      if (state.currentChallenge.kind === 'synth') {
-        playSynthChallenge(context, state.currentChallenge);
+      if (challenge.kind === 'synth') {
+        playSynthChallenge(context, challenge);
       } else {
-        playAudioBuffer(context, state.currentChallenge.audioBuffer);
+        playAudioBuffer(context, challenge.audioBuffer);
       }
-      animateNoteTrack(state.currentChallenge);
+      animateNoteTrack(challenge);
 
       const completionTimer = window.setTimeout(() => {
+        if (requestId !== state.playbackId || flowId !== state.flowId || challenge !== state.currentChallenge) {
+          return;
+        }
         refs.performanceStage.classList.remove('playing');
         refs.playReferenceButton.disabled = false;
         if (markListened) {
           state.hasListened = true;
           refs.startAttemptButton.disabled = false;
+          refs.attemptAudioInput.disabled = false;
+          refs.fileAttemptLabel.classList.remove('disabled');
+          refs.fileAttemptLabel.setAttribute('aria-disabled', 'false');
           refs.stageStatus.textContent = 'À ton tour : reproduis le jingle';
           playUiTone('ready');
         } else {
           refs.stageStatus.textContent = 'Référence terminée';
         }
-      }, state.currentChallenge.duration * 1000 + 180);
+      }, challenge.duration * 1000 + 180);
       state.activeTimers.push(completionTimer);
+      return true;
     } catch (error) {
-      refs.playReferenceButton.disabled = false;
-      showToast(error.message || 'Impossible de lire le jingle.');
+      if (requestId === state.playbackId && flowId === state.flowId && challenge === state.currentChallenge) {
+        refs.playReferenceButton.disabled = false;
+        showToast(error.message || 'Impossible de lire le jingle.');
+      }
+      return false;
     }
   }
 
@@ -571,46 +852,9 @@
     }
   }
 
-  function buildPresetProfile(challenge) {
-    const bins = 96;
-    const envelope = Array(bins).fill(0);
-    const pitch = Array(bins).fill(null);
-    const first = challenge.notes[0];
-    const last = challenge.notes.at(-1);
-    const activeDuration = last.start + last.duration - first.start;
-    const onsets = challenge.notes.map((note) => (note.start - first.start) / activeDuration);
-
-    // Recorded performances are trimmed to their active region. Build the
-    // reference on the same normalized timeline so a short intro silence does
-    // not count as a rhythm error.
-    for (let index = 0; index < bins; index += 1) {
-      const time = first.start + (index / (bins - 1)) * activeDuration;
-      challenge.notes.forEach((note) => {
-        if (time < note.start || time > note.start + note.duration) return;
-        const local = (time - note.start) / note.duration;
-        const attack = clamp(local / 0.12, 0, 1);
-        const release = clamp((1 - local) / 0.20, 0, 1);
-        envelope[index] = Math.max(envelope[index], Math.min(attack, release));
-        pitch[index] = frequencyToMidi(note.frequency);
-      });
-    }
-
-    return {
-      envelope,
-      pitch,
-      onsets,
-      activeDuration,
-      fullDuration: challenge.duration,
-      peak: 1,
-      noiseFloor: 0,
-      clippingRatio: 0,
-      voicedRatio: 1,
-      signalPresent: true
-    };
-  }
-
   async function startAttempt() {
     if (!state.hasListened) return;
+    const attempt = createAttemptContext('microphone');
     stopReference();
     refs.startAttemptButton.disabled = true;
     refs.playReferenceButton.disabled = true;
@@ -618,29 +862,79 @@
     refs.recordPanel.hidden = false;
     refs.analysisPanel.hidden = true;
     refs.resultPanel.hidden = true;
+    refs.micError.hidden = true;
     refs.recordState.textContent = 'Autorisation micro';
     updateStepper('record');
 
     try {
-      await prepareMicrophone();
-      await runCountdown();
-      await beginRecording();
+      await prepareMicrophone(attempt);
+      if (!isAttemptActive(attempt)) throw createAbortError();
+      await runCountdown(attempt);
+      if (!isAttemptActive(attempt)) throw createAbortError();
+      await beginRecording(attempt);
     } catch (error) {
+      if (error?.name === 'AbortError') return;
       stopMicrophoneSession();
+      if (!isAttemptActive(attempt)) return;
+      state.activeAttempt = null;
+      setDifficultyLocked(false);
       refs.listenPanel.hidden = false;
       refs.recordPanel.hidden = true;
       refs.startAttemptButton.disabled = false;
       refs.playReferenceButton.disabled = false;
       updateStepper('listen');
-      const message = error?.name === 'NotAllowedError'
-        ? 'Accès au micro refusé. Autorise-le dans les réglages du navigateur puis réessaie.'
-        : (error.message || 'Le microphone ne peut pas être utilisé.');
+      const details = microphoneErrorCopy(error);
+      const message = details.message;
       showToast(message, 5200);
+      refs.micErrorTitle.textContent = details.title;
+      refs.micErrorMessage.textContent = message;
+      refs.micError.hidden = false;
+      refs.micError.focus({ preventScroll: true });
       refs.stageStatus.textContent = 'Microphone indisponible';
     }
   }
 
-  async function prepareMicrophone() {
+  function createAttemptContext(mode) {
+    const attempt = {
+      id: ++state.flowId,
+      challenge: state.currentChallenge,
+      referenceProfile: state.referenceProfile,
+      difficulty: state.difficulty,
+      target: rivalTargetFor(state.currentChallenge, state.difficulty),
+      mode
+    };
+    state.activeAttempt = attempt;
+    setDifficultyLocked(true);
+    return attempt;
+  }
+
+  function isAttemptActive(attempt) {
+    return Boolean(attempt && state.activeAttempt?.id === attempt.id && state.flowId === attempt.id);
+  }
+
+  function createAbortError() {
+    try { return new DOMException('Flux annulé', 'AbortError'); }
+    catch {
+      const error = new Error('Flux annulé');
+      error.name = 'AbortError';
+      return error;
+    }
+  }
+
+  function microphoneErrorCopy(error) {
+    if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') {
+      return { title: 'Autorisation refusée', message: 'Autorise le microphone dans les réglages du navigateur, puis relance ton essai. Tu peux aussi importer un enregistrement.' };
+    }
+    if (error?.name === 'NotFoundError' || error?.name === 'DevicesNotFoundError') {
+      return { title: 'Aucun microphone détecté', message: 'Connecte un microphone ou utilise le mode sans micro avec un fichier audio.' };
+    }
+    if (error?.name === 'NotReadableError' || error?.name === 'TrackStartError') {
+      return { title: 'Microphone déjà utilisé', message: 'Ferme les autres applications audio, puis réessaie ou importe un enregistrement.' };
+    }
+    return { title: 'Microphone indisponible', message: error?.message || 'Le microphone ne peut pas être utilisé. Tu peux continuer avec un fichier audio.' };
+  }
+
+  async function prepareMicrophone(attempt) {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Ce navigateur ne prend pas en charge l’accès au microphone.');
     }
@@ -648,7 +942,7 @@
       throw new Error('L’enregistrement audio n’est pas pris en charge par ce navigateur.');
     }
 
-    state.mediaStream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: false,
         noiseSuppression: false,
@@ -657,20 +951,35 @@
       },
       video: false
     });
+    if (!isAttemptActive(attempt)) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw createAbortError();
+    }
+    state.mediaStream = stream;
     const context = await getAudioContext();
+    if (!isAttemptActive(attempt)) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw createAbortError();
+    }
     state.analyser = context.createAnalyser();
     state.analyser.fftSize = 2048;
     state.analyser.smoothingTimeConstant = 0.25;
     state.analyserSource = context.createMediaStreamSource(state.mediaStream);
     state.analyserSource.connect(state.analyser);
+    stream.getAudioTracks().forEach((track) => track.addEventListener('ended', () => {
+      if (!isAttemptActive(attempt)) return;
+      showToast('Le microphone a été déconnecté.');
+      stopRecording();
+    }, { once: true }));
   }
 
-  async function runCountdown() {
+  async function runCountdown(attempt) {
     refs.countdown.hidden = false;
     refs.micOrb.hidden = true;
     refs.stageStatus.textContent = 'Prépare-toi…';
     const values = ['3', '2', '1', 'GO'];
     for (const value of values) {
+      if (!isAttemptActive(attempt)) throw createAbortError();
       refs.countdown.textContent = value;
       refs.countdown.classList.remove('pop');
       void refs.countdown.offsetWidth;
@@ -678,6 +987,7 @@
       playUiTone(value === 'GO' ? 'ready' : 'tap');
       await sleep(value === 'GO' ? 620 : 760);
     }
+    if (!isAttemptActive(attempt)) throw createAbortError();
     refs.countdown.hidden = true;
   }
 
@@ -691,7 +1001,8 @@
     return options.find((type) => MediaRecorder.isTypeSupported?.(type)) || '';
   }
 
-  async function beginRecording() {
+  async function beginRecording(attempt) {
+    if (!isAttemptActive(attempt) || !state.mediaStream) throw createAbortError();
     const mimeType = preferredMimeType();
     const recorderOptions = mimeType ? { mimeType, audioBitsPerSecond: 128000 } : undefined;
     const chunks = [];
@@ -699,39 +1010,46 @@
     state.recordingCancelled = false;
     state.lastLivePitch = null;
     state.lastPitchSampleAt = 0;
-    state.mediaRecorder = new MediaRecorder(state.mediaStream, recorderOptions);
-    state.mediaRecorder.addEventListener('dataavailable', (event) => {
+    const recorder = new MediaRecorder(state.mediaStream, recorderOptions);
+    state.mediaRecorder = recorder;
+    recorder.addEventListener('dataavailable', (event) => {
       if (event.data?.size) chunks.push(event.data);
     });
-    state.mediaRecorder.addEventListener('stop', async () => {
-      if (state.recordingCancelled) {
+    recorder.addEventListener('error', (event) => {
+      failActiveAttempt(event.error || new Error('L’enregistrement audio a échoué.'), attempt);
+    }, { once: true });
+    recorder.addEventListener('stop', () => {
+      if (state.recordingCancelled || !isAttemptActive(attempt)) {
         state.recordingCancelled = false;
         return;
       }
-      const type = state.mediaRecorder?.mimeType || mimeType || 'audio/webm';
-      state.attemptBlob = new Blob(chunks, { type });
-      await handleRecordingComplete();
+      const type = recorder.mimeType || mimeType || 'audio/webm';
+      const blob = new Blob(chunks, { type });
+      const liveDuration = Math.max(0.01, (performance.now() - state.recordingStartedAt) / 1000);
+      const frames = state.liveFrames.map((frame) => ({ ...frame }));
+      handleRecordingComplete(attempt, blob, frames, liveDuration)
+        .catch((error) => failActiveAttempt(error, attempt));
     }, { once: true });
 
     state.recordingStartedAt = performance.now();
-    state.mediaRecorder.start(120);
+    recorder.start(120);
     refs.recordState.textContent = 'Enregistrement';
     refs.stopRecordingButton.disabled = false;
     refs.micOrb.hidden = false;
     refs.performanceStage.classList.add('recording');
     refs.stageStatus.textContent = 'Reproduis le jingle maintenant';
-    monitorMicrophone();
+    monitorMicrophone(attempt, recorder);
 
-    const maxDuration = clamp(state.currentChallenge.duration + 1.25, 2.0, 9.2);
+    const maxDuration = clamp(attempt.challenge.duration + 1.25, 2.0, 9.2);
     state.recordingStopTimer = window.setTimeout(() => stopRecording(), maxDuration * 1000);
   }
 
-  function monitorMicrophone() {
+  function monitorMicrophone(attempt, recorder) {
     if (!state.analyser || !state.recordingStartedAt) return;
     const buffer = new Float32Array(state.analyser.fftSize);
 
     const frame = () => {
-      if (!state.mediaRecorder || state.mediaRecorder.state !== 'recording') return;
+      if (!isAttemptActive(attempt) || recorder.state !== 'recording' || !state.analyser) return;
       state.analyser.getFloatTimeDomainData(buffer);
       const now = performance.now();
       const elapsed = (now - state.recordingStartedAt) / 1000;
@@ -766,40 +1084,63 @@
   }
 
   function stopRecording() {
-    if (!state.mediaRecorder || state.mediaRecorder.state !== 'recording') return;
+    const recorder = state.mediaRecorder;
+    if (!recorder || recorder.state !== 'recording') return;
     clearTimeout(state.recordingStopTimer);
     cancelAnimationFrame(state.animationFrame);
     refs.stopRecordingButton.disabled = true;
     refs.recordState.textContent = 'Terminé';
     refs.micOrb.hidden = true;
     refs.performanceStage.classList.remove('recording');
-    state.mediaRecorder.stop();
+    recorder.stop();
   }
 
-  async function handleRecordingComplete() {
-    const liveDuration = Math.max(0.01, (performance.now() - state.recordingStartedAt) / 1000);
+  async function handleRecordingComplete(attempt, blob, frames, liveDuration) {
+    if (!isAttemptActive(attempt)) return;
     refs.recordPanel.hidden = true;
     refs.analysisPanel.hidden = false;
     refs.stageStatus.textContent = 'Analyse de la performance…';
     stopMicrophoneTracksOnly();
 
+    if (!isAttemptActive(attempt)) return;
     if (state.attemptUrl) URL.revokeObjectURL(state.attemptUrl);
-    state.attemptUrl = URL.createObjectURL(state.attemptBlob);
+    state.attemptBlob = blob;
+    state.attemptUrl = URL.createObjectURL(blob);
     state.attemptAudio = new Audio(state.attemptUrl);
 
     let recordingProfile;
     try {
       const context = await getAudioContext();
-      const arrayBuffer = await state.attemptBlob.arrayBuffer();
+      if (!isAttemptActive(attempt)) return;
+      const arrayBuffer = await blob.arrayBuffer();
+      if (!isAttemptActive(attempt)) return;
       const decoded = await context.decodeAudioData(arrayBuffer.slice(0));
+      if (!isAttemptActive(attempt)) return;
       recordingProfile = await extractProfileFromAudioBuffer(decoded);
     } catch {
-      recordingProfile = buildProfileFromFrames(state.liveFrames, liveDuration);
+      recordingProfile = buildProfileFromFrames(frames, liveDuration);
     }
 
+    if (!isAttemptActive(attempt)) return;
     await sleep(420);
-    const result = compareProfiles(state.referenceProfile, recordingProfile, state.difficulty);
-    showResult(result);
+    if (!isAttemptActive(attempt)) return;
+    const result = compareProfiles(attempt.referenceProfile, recordingProfile, attempt.difficulty);
+    showResult(result, attempt);
+  }
+
+  function failActiveAttempt(error, attempt) {
+    if (!isAttemptActive(attempt)) return;
+    stopMicrophoneSession();
+    state.activeAttempt = null;
+    setDifficultyLocked(false);
+    refs.recordPanel.hidden = true;
+    refs.analysisPanel.hidden = true;
+    refs.listenPanel.hidden = false;
+    refs.startAttemptButton.disabled = false;
+    refs.playReferenceButton.disabled = false;
+    updateStepper('listen');
+    refs.stageStatus.textContent = 'Essai interrompu';
+    showToast(error?.message || 'L’essai n’a pas pu être analysé.', 5000);
   }
 
   function stopMicrophoneTracksOnly() {
@@ -823,35 +1164,38 @@
   }
 
   async function extractProfileFromAudioBuffer(buffer) {
-    await sleep(0);
-    const targetRate = 11025;
     const mono = mixToMono(buffer);
-    const samples = resampleLinear(mono, buffer.sampleRate, targetRate);
-    const frameSize = 1024;
-    const hop = 256;
-    const frames = [];
-
-    for (let offset = 0; offset + frameSize <= samples.length; offset += hop) {
-      const frame = samples.subarray(offset, offset + frameSize);
-      let sum = 0;
-      let clipped = 0;
-      for (let index = 0; index < frame.length; index += 1) {
-        const value = frame[index];
-        sum += value * value;
-        if (Math.abs(value) > 0.985) clipped += 1;
+    if (window.Worker) {
+      try {
+        return await analyzeAudioInWorker(mono, buffer.sampleRate, buffer.duration);
+      } catch {
+        // A strict browser policy may disable workers; use the tested core locally.
       }
-      const rms = Math.sqrt(sum / frame.length);
-      const pitch = detectPitch(frame, targetRate, rms);
-      frames.push({
-        time: offset / targetRate,
-        rms,
-        pitch,
-        clipping: clipped / frame.length
-      });
-      if (frames.length % 60 === 0) await sleep(0);
     }
+    await sleep(0);
+    return analyzeSamples(mono, buffer.sampleRate, buffer.duration);
+  }
 
-    return buildProfileFromFrames(frames, buffer.duration);
+  function analyzeAudioInWorker(samples, sampleRate, duration) {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(new URL('./analysis-worker.js', import.meta.url), { type: 'module' });
+      const timeout = window.setTimeout(() => {
+        worker.terminate();
+        reject(new Error('L’analyse audio a dépassé le délai prévu.'));
+      }, 20_000);
+      const finish = (callback, value) => {
+        clearTimeout(timeout);
+        worker.terminate();
+        callback(value);
+      };
+      worker.addEventListener('message', (event) => {
+        if (event.data?.error) finish(reject, new Error(event.data.error));
+        else finish(resolve, event.data.profile);
+      }, { once: true });
+      worker.addEventListener('error', () => finish(reject, new Error('Le moteur d’analyse audio est indisponible.')), { once: true });
+      const transferable = samples.slice();
+      worker.postMessage({ samples: transferable.buffer, sampleRate, duration }, [transferable.buffer]);
+    });
   }
 
   function mixToMono(buffer) {
@@ -862,341 +1206,6 @@
       for (let index = 0; index < length; index += 1) output[index] += data[index] / buffer.numberOfChannels;
     }
     return output;
-  }
-
-  function resampleLinear(input, sourceRate, targetRate) {
-    if (sourceRate === targetRate) return input.slice();
-    const ratio = sourceRate / targetRate;
-    const length = Math.max(1, Math.floor(input.length / ratio));
-    const output = new Float32Array(length);
-    for (let index = 0; index < length; index += 1) {
-      const sourcePosition = index * ratio;
-      const low = Math.floor(sourcePosition);
-      const high = Math.min(input.length - 1, low + 1);
-      const mix = sourcePosition - low;
-      output[index] = input[low] * (1 - mix) + input[high] * mix;
-    }
-    return output;
-  }
-
-  function detectPitch(frame, sampleRate, knownRms = null) {
-    const size = frame.length;
-    let average = 0;
-    let energy = 0;
-    for (let index = 0; index < size; index += 1) average += frame[index];
-    average /= size;
-
-    const centered = new Float32Array(size);
-    for (let index = 0; index < size; index += 1) {
-      centered[index] = frame[index] - average;
-      energy += centered[index] * centered[index];
-    }
-    const rms = knownRms ?? Math.sqrt(energy / size);
-    if (rms < 0.008) return null;
-
-    const minLag = Math.max(2, Math.floor(sampleRate / 1000));
-    const maxLag = Math.min(size - 3, Math.floor(sampleRate / 70));
-    let bestLag = -1;
-    let bestCorrelation = -1;
-    const correlations = new Float32Array(maxLag + 1);
-
-    for (let lag = minLag; lag <= maxLag; lag += 1) {
-      let correlation = 0;
-      let energyA = 0;
-      let energyB = 0;
-      const limit = size - lag;
-      for (let index = 0; index < limit; index += 2) {
-        const a = centered[index];
-        const b = centered[index + lag];
-        correlation += a * b;
-        energyA += a * a;
-        energyB += b * b;
-      }
-      const normalized = correlation / Math.sqrt(energyA * energyB + 1e-12);
-      correlations[lag] = normalized;
-      if (normalized > bestCorrelation) {
-        bestCorrelation = normalized;
-        bestLag = lag;
-      }
-    }
-
-    if (bestLag < 0 || bestCorrelation < 0.43) return null;
-
-    // A periodic signal produces strong peaks at the fundamental period and at
-    // each multiple of it. Selecting the absolute maximum can therefore jump
-    // one or several octaves downward. Prefer the earliest local peak that is
-    // almost as strong as the global maximum.
-    const strongPeakThreshold = Math.max(0.52, bestCorrelation * 0.88);
-    let selectedLag = bestLag;
-    for (let lag = minLag + 1; lag < maxLag; lag += 1) {
-      if (
-        correlations[lag] >= strongPeakThreshold &&
-        correlations[lag] >= correlations[lag - 1] &&
-        correlations[lag] >= correlations[lag + 1]
-      ) {
-        selectedLag = lag;
-        break;
-      }
-    }
-
-    const left = correlations[Math.max(minLag, selectedLag - 1)];
-    const center = correlations[selectedLag];
-    const right = correlations[Math.min(maxLag, selectedLag + 1)];
-    const denominator = 2 * (2 * center - left - right);
-    const correction = Math.abs(denominator) > 1e-8 ? (right - left) / denominator : 0;
-    const refinedLag = selectedLag + clamp(correction, -0.5, 0.5);
-    const frequency = sampleRate / refinedLag;
-    return frequency >= 70 && frequency <= 1000 ? frequency : null;
-  }
-
-  function buildProfileFromFrames(frames, fullDuration) {
-    if (!frames.length) {
-      return {
-        envelope: Array(96).fill(0), pitch: Array(96).fill(null), onsets: [],
-        activeDuration: 0, fullDuration, peak: 0, noiseFloor: 0, clippingRatio: 0,
-        voicedRatio: 0, signalPresent: false
-      };
-    }
-
-    const rmsValues = frames.map((frame) => frame.rms);
-    const peak = Math.max(...rmsValues);
-    const noiseFloor = percentile(rmsValues, 0.10);
-    const adaptiveNoiseThreshold = Math.min(noiseFloor * 2.4, peak * 0.42);
-    const threshold = Math.max(0.0075, adaptiveNoiseThreshold, peak * 0.115);
-    const activeMask = frames.map((frame) => frame.rms >= threshold);
-    const firstIndex = findSustainedIndex(activeMask, 3, false);
-    const lastIndex = findSustainedIndex(activeMask, 3, true);
-    const signalPresent = peak >= 0.012 && firstIndex !== -1 && lastIndex !== -1 && lastIndex > firstIndex;
-
-    if (!signalPresent) {
-      return {
-        envelope: Array(96).fill(0), pitch: Array(96).fill(null), onsets: [],
-        activeDuration: 0, fullDuration, peak, noiseFloor,
-        clippingRatio: mean(frames.map((frame) => frame.clipping || 0)),
-        voicedRatio: 0, signalPresent: false
-      };
-    }
-
-    const activeStart = frames[firstIndex].time;
-    const activeEnd = frames[lastIndex].time;
-    const activeDuration = Math.max(0.03, activeEnd - activeStart);
-    const bins = 96;
-    const envelope = Array(bins).fill(0);
-    const pitch = Array(bins).fill(null);
-    const normalizedFrames = frames.slice(firstIndex, lastIndex + 1).map((frame) => ({
-      ...frame,
-      position: clamp((frame.time - activeStart) / activeDuration, 0, 1),
-      normalizedRms: clamp((frame.rms - noiseFloor) / Math.max(1e-6, peak - noiseFloor), 0, 1)
-    }));
-
-    for (let bin = 0; bin < bins; bin += 1) {
-      const center = bin / (bins - 1);
-      const radius = 0.017;
-      let local = normalizedFrames.filter((frame) => Math.abs(frame.position - center) <= radius);
-      if (!local.length) {
-        local = [normalizedFrames.reduce((closest, frame) => (
-          Math.abs(frame.position - center) < Math.abs(closest.position - center) ? frame : closest
-        ), normalizedFrames[0])];
-      }
-      envelope[bin] = mean(local.map((frame) => frame.normalizedRms));
-      const midiValues = local
-        .map((frame) => frame.pitch ? frequencyToMidi(frame.pitch) : null)
-        .filter((value) => Number.isFinite(value));
-      pitch[bin] = median(midiValues);
-    }
-
-    smoothArrayInPlace(envelope, 2);
-    fillShortPitchGaps(pitch, 3);
-    const onsets = detectOnsets(envelope);
-    const activeFrames = frames.slice(firstIndex, lastIndex + 1);
-    const voicedRatio = activeFrames.filter((frame) => frame.pitch).length / activeFrames.length;
-
-    return {
-      envelope,
-      pitch,
-      onsets,
-      activeDuration,
-      fullDuration,
-      peak,
-      noiseFloor,
-      clippingRatio: mean(activeFrames.map((frame) => frame.clipping || 0)),
-      voicedRatio,
-      signalPresent: true
-    };
-  }
-
-  function findSustainedIndex(mask, required, reverse) {
-    if (!reverse) {
-      for (let index = 0; index <= mask.length - required; index += 1) {
-        if (mask.slice(index, index + required).every(Boolean)) return index;
-      }
-      return -1;
-    }
-    for (let index = mask.length - 1; index >= required - 1; index -= 1) {
-      if (mask.slice(index - required + 1, index + 1).every(Boolean)) return index;
-    }
-    return -1;
-  }
-
-  function smoothArrayInPlace(values, radius = 1) {
-    const source = [...values];
-    for (let index = 0; index < values.length; index += 1) {
-      const from = Math.max(0, index - radius);
-      const to = Math.min(values.length, index + radius + 1);
-      values[index] = mean(source.slice(from, to));
-    }
-  }
-
-  function fillShortPitchGaps(values, maxGap) {
-    let index = 0;
-    while (index < values.length) {
-      if (values[index] !== null) { index += 1; continue; }
-      const start = index;
-      while (index < values.length && values[index] === null) index += 1;
-      const end = index - 1;
-      const length = end - start + 1;
-      const left = start > 0 ? values[start - 1] : null;
-      const right = index < values.length ? values[index] : null;
-      if (length <= maxGap && left !== null && right !== null) {
-        for (let offset = 0; offset < length; offset += 1) {
-          values[start + offset] = left + (right - left) * ((offset + 1) / (length + 1));
-        }
-      }
-    }
-  }
-
-  function detectOnsets(envelope) {
-    if (!envelope.length) return [];
-    const derivative = envelope.map((value, index) => index === 0 ? value : value - envelope[index - 1]);
-    const positive = derivative.filter((value) => value > 0);
-    const threshold = Math.max(0.055, percentile(positive, 0.72));
-    const candidates = envelope[0] > 0.04 ? [0] : [];
-    for (let index = 1; index < derivative.length - 1; index += 1) {
-      if (derivative[index] >= threshold && derivative[index] >= derivative[index - 1] && derivative[index] >= derivative[index + 1]) {
-        const position = index / (envelope.length - 1);
-        if (!candidates.length || position - candidates.at(-1) > 0.075) candidates.push(position);
-        else if (derivative[index] > derivative[Math.round(candidates.at(-1) * (envelope.length - 1))]) candidates[candidates.length - 1] = position;
-      }
-    }
-    if (!candidates.length && Math.max(...envelope) > 0.12) candidates.push(0);
-    return candidates.slice(0, 12);
-  }
-
-  function compareProfiles(reference, recording, difficultyName) {
-    const settings = difficultySettings[difficultyName] || difficultySettings.normal;
-    if (!recording.signalPresent) {
-      return { total: 0, melody: 0, rhythm: 0, timing: 0, clarity: 0, grade: 'E', noSignal: true };
-    }
-
-    const alignment = findBestEnvelopeAlignment(reference.envelope, recording.envelope);
-    const alignedEnvelope = shiftArray(recording.envelope, alignment.shift, 0);
-    const alignedPitch = shiftArray(recording.pitch, alignment.shift, null);
-
-    const pearsonValue = pearson(reference.envelope, alignedEnvelope);
-    const shapeScore = clamp((pearsonValue + 1) / 2, 0, 1);
-    const envelopeError = mean(reference.envelope.map((value, index) => Math.abs(value - alignedEnvelope[index])));
-    const envelopeScore = clamp(1 - envelopeError, 0, 1);
-    const onsetScore = compareOnsets(reference.onsets, recording.onsets, settings.onsetTolerance);
-    const rhythm = Math.round(100 * (shapeScore * 0.36 + envelopeScore * 0.29 + onsetScore * 0.35));
-
-    const melody = scorePitchContours(reference.pitch, alignedPitch, settings.pitchTolerance, recording.voicedRatio);
-    const durationRatio = recording.activeDuration / Math.max(reference.activeDuration, 0.05);
-    const timing = Math.round(100 * Math.exp(-Math.abs(Math.log(Math.max(0.01, durationRatio))) * settings.durationStrength));
-
-    const snr = recording.peak / Math.max(recording.noiseFloor, 0.001);
-    const snrScore = clamp((snr - 1.4) / 8, 0, 1);
-    const levelScore = clamp((recording.peak - 0.012) / 0.11, 0, 1);
-    const voicedScore = clamp(recording.voicedRatio / 0.62, 0, 1);
-    const clippingPenalty = clamp(recording.clippingRatio * 22, 0, 0.72);
-    const clarity = Math.round(100 * clamp(snrScore * 0.36 + levelScore * 0.25 + voicedScore * 0.39 - clippingPenalty, 0, 1));
-
-    let total = Math.round(melody * 0.45 + rhythm * 0.29 + timing * 0.16 + clarity * 0.10);
-    if (recording.voicedRatio < 0.12) total = Math.min(total, 49);
-    const grade = gradeForScore(total);
-    return { total, melody, rhythm, timing, clarity, grade, noSignal: false, alignment: alignment.shift };
-  }
-
-  function findBestEnvelopeAlignment(reference, recording) {
-    let best = { shift: 0, score: -Infinity };
-    for (let shift = -6; shift <= 6; shift += 1) {
-      const shifted = shiftArray(recording, shift, 0);
-      const score = pearson(reference, shifted) - Math.abs(shift) * 0.008;
-      if (score > best.score) best = { shift, score };
-    }
-    return best;
-  }
-
-  function shiftArray(values, shift, fill) {
-    return values.map((_, index) => {
-      const sourceIndex = index - shift;
-      return sourceIndex >= 0 && sourceIndex < values.length ? values[sourceIndex] : fill;
-    });
-  }
-
-  function pearson(a, b) {
-    const length = Math.min(a.length, b.length);
-    if (!length) return 0;
-    const aMean = mean(a.slice(0, length));
-    const bMean = mean(b.slice(0, length));
-    let numerator = 0;
-    let denominatorA = 0;
-    let denominatorB = 0;
-    for (let index = 0; index < length; index += 1) {
-      const da = a[index] - aMean;
-      const db = b[index] - bMean;
-      numerator += da * db;
-      denominatorA += da * da;
-      denominatorB += db * db;
-    }
-    const denominator = Math.sqrt(denominatorA * denominatorB);
-    return denominator > 1e-8 ? numerator / denominator : 0;
-  }
-
-  function compareOnsets(referenceOnsets, recordingOnsets, tolerance) {
-    if (!referenceOnsets.length && !recordingOnsets.length) return 1;
-    if (!referenceOnsets.length || !recordingOnsets.length) return 0.28;
-    const referenceErrors = referenceOnsets.map((onset) => Math.min(...recordingOnsets.map((other) => Math.abs(onset - other))));
-    const recordingErrors = recordingOnsets.map((onset) => Math.min(...referenceOnsets.map((other) => Math.abs(onset - other))));
-    const symmetricError = mean([...referenceErrors, ...recordingErrors]);
-    const countPenalty = Math.abs(referenceOnsets.length - recordingOnsets.length) / Math.max(referenceOnsets.length, recordingOnsets.length);
-    return clamp(Math.exp(-symmetricError / tolerance) * (1 - countPenalty * 0.28), 0, 1);
-  }
-
-  function scorePitchContours(referencePitch, recordingPitch, tolerance, voicedRatio) {
-    const pairs = [];
-    for (let index = 0; index < Math.min(referencePitch.length, recordingPitch.length); index += 1) {
-      if (Number.isFinite(referencePitch[index]) && Number.isFinite(recordingPitch[index])) {
-        pairs.push({ reference: referencePitch[index], recording: recordingPitch[index], index });
-      }
-    }
-    if (pairs.length < 6) return Math.round(18 * clamp(voicedRatio / 0.25, 0, 1));
-
-    const offsets = pairs.map((pair) => pair.recording - pair.reference);
-    const transposition = median(offsets) || 0;
-    const residuals = pairs.map((pair) => Math.abs((pair.recording - transposition) - pair.reference));
-    const residualError = percentile(residuals, 0.72);
-
-    const intervalErrors = [];
-    for (let index = 1; index < pairs.length; index += 1) {
-      if (pairs[index].index - pairs[index - 1].index > 5) continue;
-      const referenceInterval = pairs[index].reference - pairs[index - 1].reference;
-      const recordingInterval = pairs[index].recording - pairs[index - 1].recording;
-      intervalErrors.push(Math.abs(referenceInterval - recordingInterval));
-    }
-    const intervalError = intervalErrors.length ? percentile(intervalErrors, 0.65) : residualError;
-    const combinedError = residualError * 0.72 + intervalError * 0.28;
-    const coverage = pairs.length / referencePitch.filter(Number.isFinite).length;
-    const base = Math.exp(-combinedError / tolerance);
-    return Math.round(100 * clamp(base * (0.66 + clamp(coverage, 0, 1) * 0.34), 0, 1));
-  }
-
-  function gradeForScore(score) {
-    if (score >= 95) return 'S';
-    if (score >= 86) return 'A';
-    if (score >= 74) return 'B';
-    if (score >= 60) return 'C';
-    if (score >= 42) return 'D';
-    return 'E';
   }
 
   function resultCopy(result) {
@@ -1226,22 +1235,45 @@
     }
   }
 
-  function showResult(result) {
-    state.lastResult = result;
+  function showResult(result, attempt) {
+    if (!isAttemptActive(attempt)) return;
+    const challenge = attempt.challenge;
+    const target = attempt.target;
+    const ranked = !result.noSignal;
+    const recordEligible = ranked && isOfficialChallengeId(challenge.id);
+    const won = ranked && result.total >= target;
+    const recordKey = bestKey(challenge.id, attempt.difficulty);
+    const priorBest = state.profile.bests[recordKey];
+    const isBest = recordEligible && (priorBest === undefined || result.total > priorBest);
+    const difficultyBonus = attempt.difficulty === 'expert' ? 12 : attempt.difficulty === 'normal' ? 6 : 0;
+    const xpEarned = ranked
+      ? Math.max(5, Math.round(result.total / 4)) + difficultyBonus + (won ? 20 : 5)
+      : 0;
+
+    state.lastResult = { ...result, challengeTitle: challenge.title, won, target, mode: attempt.mode };
+    state.activeAttempt = null;
+    setDifficultyLocked(false);
     refs.analysisPanel.hidden = true;
     refs.resultPanel.hidden = false;
     refs.listenPanel.hidden = true;
     refs.recordPanel.hidden = true;
-    refs.stageStatus.textContent = `Résultat : ${result.total} sur 100`;
+    refs.stageStatus.textContent = ranked ? 'Résultat : ' + result.total + ' sur 100' : 'Essai non classé';
     updateStepper('result');
 
-    const priorBest = state.history.length ? Math.max(...state.history.map((item) => item.score)) : -1;
-    const isBest = result.total > priorBest;
     const copy = resultCopy(result);
     refs.resultTitle.textContent = copy.title;
     refs.resultMessage.textContent = copy.message;
-    refs.gradeChip.textContent = `RANG ${result.grade}`;
+    refs.gradeChip.textContent = ranked ? 'RANG ' + result.grade : 'NON CLASSÉ';
     refs.bestResult.hidden = !isBest;
+    refs.shareScoreButton.hidden = !ranked;
+    refs.compareButton.disabled = false;
+    refs.duelOutcome.textContent = !ranked
+      ? 'Essai non classé · aucun signal exploitable'
+      : won
+        ? 'Victoire contre ' + (challenge.rival?.name || 'STUDIO') + ' · ' + result.total + ' à ' + target
+        : (challenge.rival?.name || 'STUDIO') + ' conserve le duel · objectif ' + target;
+    refs.duelOutcome.classList.toggle('defeat', !won);
+    refs.xpReward.textContent = ranked ? '+' + xpEarned + ' XP' : 'AUCUN XP';
 
     animateNumber(refs.totalScore, result.total, 850);
     refs.scoreRing.style.setProperty('--score', result.total);
@@ -1250,17 +1282,38 @@
     setMetric('timing', result.timing);
     setMetric('clarity', result.clarity);
 
-    state.history.unshift({
-      title: state.currentChallenge.title,
-      score: result.total,
-      grade: result.grade,
-      difficulty: difficultySettings[state.difficulty].label,
-      timestamp: new Date().toISOString()
-    });
-    state.history = state.history.slice(0, 12);
-    saveHistory();
-    renderHistory();
+    if (ranked) {
+      state.profile.xp += xpEarned;
+      state.profile.duels += 1;
+      state.profile.wins += won ? 1 : 0;
+      state.profile.streak = won ? state.profile.streak + 1 : 0;
+      if (isBest) state.profile.bests[recordKey] = result.total;
+
+      state.history.unshift({
+        title: challenge.title,
+        challengeId: challenge.id,
+        score: result.total,
+        grade: result.grade,
+        difficultyKey: attempt.difficulty,
+        difficulty: difficultySettings[attempt.difficulty].label,
+        mode: attempt.mode,
+        target,
+        won,
+        metrics: {
+          melody: result.melody,
+          rhythm: result.rhythm,
+          timing: result.timing,
+          clarity: result.clarity
+        },
+        timestamp: new Date().toISOString()
+      });
+      state.history = state.history.slice(0, 50);
+      saveGame();
+      renderHistory();
+      renderChallengeCards();
+    }
     playUiTone(result.total >= 60 ? 'success' : 'tap');
+    requestAnimationFrame(() => refs.resultPanel.focus({ preventScroll: true }));
   }
 
   function setMetric(name, value) {
@@ -1282,6 +1335,7 @@
   }
 
   function retryChallenge() {
+    invalidateFlow();
     stopReference();
     stopAttemptPlayback();
     stopMicrophoneSession();
@@ -1289,39 +1343,65 @@
     refs.listenPanel.hidden = false;
     refs.startAttemptButton.disabled = false;
     refs.playReferenceButton.disabled = false;
+    refs.compareButton.disabled = false;
+    refs.micError.hidden = true;
     refs.stageStatus.textContent = 'Réécoute la référence ou relance ton essai';
     updateStepper('listen');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
+    requestAnimationFrame(() => refs.playReferenceButton.focus({ preventScroll: true }));
   }
 
-  function playAttempt() {
-    if (!state.attemptUrl) return;
+  function playAttempt(url = state.attemptUrl, { playbackId = null } = {}) {
+    if (!url) return false;
+    const standalonePlayback = playbackId === null;
+    const requestId = playbackId ?? ++state.playbackId;
+    if (requestId !== state.playbackId) return false;
+    if (standalonePlayback) refs.compareButton.disabled = false;
     stopReference();
     state.attemptAudio?.pause();
-    state.attemptAudio = new Audio(state.attemptUrl);
-    state.attemptAudio.play().catch(() => showToast('Impossible de relire cet essai.'));
+    const audio = new Audio(url);
+    state.attemptAudio = audio;
+    audio.play().catch(() => {
+      if (requestId === state.playbackId && audio === state.attemptAudio) {
+        showToast('Impossible de relire cet essai.');
+      }
+    });
     refs.stageStatus.textContent = 'Lecture de ton essai…';
-    state.attemptAudio.addEventListener('ended', () => {
-      refs.stageStatus.textContent = `Résultat : ${state.lastResult?.total ?? 0} sur 100`;
+    audio.addEventListener('ended', () => {
+      if (requestId === state.playbackId && audio === state.attemptAudio) {
+        refs.stageStatus.textContent = state.lastResult?.noSignal
+          ? 'Essai non classé'
+          : 'Résultat : ' + (state.lastResult?.total ?? 0) + ' sur 100';
+      }
     }, { once: true });
+    return true;
   }
 
   async function compareAB() {
     if (!state.attemptUrl) return;
+    const playbackId = ++state.playbackId;
+    const attemptUrl = state.attemptUrl;
+    const challengeDuration = state.currentChallenge.duration;
     refs.compareButton.disabled = true;
     refs.stageStatus.textContent = 'A : référence';
-    await playReference({ markListened: false });
-    await sleep(state.currentChallenge.duration * 1000 + 470);
+    const started = await playReference({ markListened: false, playbackId });
+    if (!started || playbackId !== state.playbackId) {
+      refs.compareButton.disabled = false;
+      return;
+    }
+    await sleep(challengeDuration * 1000 + 470);
+    if (playbackId !== state.playbackId) return;
     refs.stageStatus.textContent = 'B : ton essai';
-    playAttempt();
+    playAttempt(attemptUrl, { playbackId });
     const attemptDuration = state.attemptAudio?.duration;
-    await sleep(Number.isFinite(attemptDuration) ? attemptDuration * 1000 + 200 : state.currentChallenge.duration * 1000 + 1000);
-    refs.compareButton.disabled = false;
+    await sleep(Number.isFinite(attemptDuration) ? attemptDuration * 1000 + 200 : challengeDuration * 1000 + 1000);
+    if (playbackId === state.playbackId) refs.compareButton.disabled = false;
   }
 
   async function shareScore() {
-    if (!state.lastResult) return;
-    const text = `J’ai obtenu ${state.lastResult.total}/100 (rang ${state.lastResult.grade}) sur « ${state.currentChallenge.title} » dans Jingle Duel !`;
+    if (!state.lastResult || state.lastResult.noSignal) return;
+    const title = state.lastResult.challengeTitle || state.currentChallenge.title;
+    const text = 'J’ai obtenu ' + state.lastResult.total + '/100 (rang ' + state.lastResult.grade + ') sur « ' + title + ' » dans Jingle Duel !';
     try {
       if (navigator.share) await navigator.share({ title: 'Jingle Duel', text });
       else {
@@ -1395,6 +1475,7 @@
   }
 
   function openStudio() {
+    state.importId += 1;
     state.pendingCustom = null;
     if (state.pendingLogoUrl) URL.revokeObjectURL(state.pendingLogoUrl);
     state.pendingLogoUrl = null;
@@ -1409,23 +1490,77 @@
     refs.studioDialog.showModal();
   }
 
+  async function handleAttemptAudio(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !state.hasListened) return;
+    const looksLikeAudio = file.type.startsWith('audio/') || /\.(wav|mp3|m4a|aac|ogg|webm|flac)$/i.test(file.name);
+    if (!looksLikeAudio) {
+      showToast('Choisis un fichier audio compatible.');
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      showToast('Le fichier audio dépasse 12 Mo.');
+      return;
+    }
+
+    const attempt = createAttemptContext('upload');
+    stopReference();
+    stopAttemptPlayback();
+    refs.listenPanel.hidden = true;
+    refs.recordPanel.hidden = true;
+    refs.resultPanel.hidden = true;
+    refs.analysisPanel.hidden = false;
+    refs.stageStatus.textContent = 'Analyse de ton fichier audio…';
+    updateStepper('record');
+
+    try {
+      const context = await getAudioContext();
+      if (!isAttemptActive(attempt)) throw createAbortError();
+      const arrayBuffer = await file.arrayBuffer();
+      if (!isAttemptActive(attempt)) throw createAbortError();
+      const decoded = await context.decodeAudioData(arrayBuffer.slice(0));
+      if (decoded.duration < 0.35 || decoded.duration > 12) {
+        throw new Error('Ton essai doit durer entre 0,4 et 12 secondes.');
+      }
+      const profile = await extractProfileFromAudioBuffer(decoded);
+      if (!isAttemptActive(attempt)) throw createAbortError();
+      if (state.attemptUrl) URL.revokeObjectURL(state.attemptUrl);
+      state.attemptBlob = file;
+      state.attemptUrl = URL.createObjectURL(file);
+      state.attemptAudio = new Audio(state.attemptUrl);
+      const result = compareProfiles(attempt.referenceProfile, profile, attempt.difficulty);
+      showResult(result, attempt);
+    } catch (error) {
+      if (error?.name !== 'AbortError') failActiveAttempt(error, attempt);
+    }
+  }
+
   async function handleCustomAudio(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = '';
+    const importId = ++state.importId;
     refs.studioError.hidden = true;
     refs.createCustomButton.disabled = true;
     refs.audioUploadTitle.textContent = 'Analyse du jingle…';
     refs.audioUploadHint.textContent = file.name;
 
     try {
+      const looksLikeAudio = file.type.startsWith('audio/') || /\.(wav|mp3|m4a|aac|ogg|webm|flac)$/i.test(file.name);
+      if (!looksLikeAudio) throw new Error('Choisis un fichier audio WAV, MP3, M4A, OGG, WEBM ou FLAC.');
       if (file.size > 12 * 1024 * 1024) throw new Error('Le fichier audio dépasse 12 Mo.');
       const context = await getAudioContext();
+      if (importId !== state.importId || !refs.studioDialog.open) return;
       const arrayBuffer = await file.arrayBuffer();
+      if (importId !== state.importId || !refs.studioDialog.open) return;
       const audioBuffer = await context.decodeAudioData(arrayBuffer.slice(0));
+      if (importId !== state.importId || !refs.studioDialog.open) return;
       if (audioBuffer.duration < 0.7 || audioBuffer.duration > 8.05) {
         throw new Error('Le jingle doit durer entre 0,7 et 8 secondes.');
       }
       const profile = await extractProfileFromAudioBuffer(audioBuffer);
+      if (importId !== state.importId || !refs.studioDialog.open) return;
       if (!profile.signalPresent) throw new Error('Le fichier ne contient pas de signal sonore suffisamment audible.');
       state.pendingCustom = { audioBuffer, profile, fileName: file.name };
       refs.audioUploadTitle.textContent = 'Jingle prêt';
@@ -1433,6 +1568,7 @@
       refs.createCustomButton.disabled = false;
       playUiTone('ready');
     } catch (error) {
+      if (importId !== state.importId || !refs.studioDialog.open) return;
       state.pendingCustom = null;
       refs.audioUploadTitle.textContent = 'Importer un autre fichier';
       refs.audioUploadHint.textContent = 'WAV, MP3, M4A ou OGG • 0,7 à 8 secondes';
@@ -1444,6 +1580,13 @@
   function handleCustomLogo(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+    if (!allowedTypes.has(file.type)) {
+      refs.studioError.textContent = 'Choisis un logo PNG, JPG, WEBP ou SVG.';
+      refs.studioError.hidden = false;
+      event.target.value = '';
+      return;
+    }
     if (file.size > 4 * 1024 * 1024) {
       refs.studioError.textContent = 'Le logo dépasse 4 Mo.';
       refs.studioError.hidden = false;
@@ -1452,6 +1595,7 @@
     }
     if (state.pendingLogoUrl) URL.revokeObjectURL(state.pendingLogoUrl);
     state.pendingLogoUrl = URL.createObjectURL(file);
+    refs.studioError.hidden = true;
     refs.logoUploadTitle.textContent = `Logo : ${file.name}`;
   }
 
@@ -1472,6 +1616,7 @@
       lineTwo: words.slice(1).join(' ') || 'JINGLE',
       kicker: 'CUSTOM AUDIO',
       accent: '#68f7ad',
+      rival: { name: 'STUDIO', base: 68 },
       duration: state.pendingCustom.audioBuffer.duration,
       audioBuffer: state.pendingCustom.audioBuffer,
       profile: state.pendingCustom.profile,
@@ -1488,6 +1633,29 @@
     state.toastTimer = window.setTimeout(() => refs.toast.classList.remove('show'), duration);
   }
 
+  function cancelActiveAttempt(message) {
+    if (!state.activeAttempt) return;
+    invalidateFlow();
+    stopMicrophoneSession();
+    refs.countdown.hidden = true;
+    refs.micOrb.hidden = true;
+    refs.performanceStage.classList.remove('recording');
+    refs.recordPanel.hidden = true;
+    refs.analysisPanel.hidden = true;
+    refs.resultPanel.hidden = true;
+    refs.listenPanel.hidden = false;
+    refs.startAttemptButton.disabled = !state.hasListened;
+    refs.playReferenceButton.disabled = false;
+    updateStepper('listen');
+    refs.stageStatus.textContent = message;
+  }
+
+  function updateNetworkStatus() {
+    const online = navigator.onLine;
+    refs.networkStatus.textContent = online ? 'En ligne' : 'Hors ligne';
+    refs.networkStatus.classList.toggle('offline', !online);
+  }
+
   function bindEvents() {
     refs.quickStartButton.addEventListener('click', () => startChallenge(presets[0]));
     refs.openStudioButton.addEventListener('click', openStudio);
@@ -1495,28 +1663,40 @@
     refs.backHomeButton.addEventListener('click', goHome);
     refs.playReferenceButton.addEventListener('click', () => playReference());
     refs.startAttemptButton.addEventListener('click', startAttempt);
+    refs.attemptAudioInput.addEventListener('change', handleAttemptAudio);
     refs.stopRecordingButton.addEventListener('click', stopRecording);
     refs.retryButton.addEventListener('click', retryChallenge);
-    refs.playAttemptButton.addEventListener('click', playAttempt);
+    refs.playAttemptButton.addEventListener('click', () => playAttempt());
     refs.compareButton.addEventListener('click', compareAB);
     refs.shareScoreButton.addEventListener('click', shareScore);
     refs.clearHistoryButton.addEventListener('click', () => {
+      if (!window.confirm('Effacer les résultats récents sur cet appareil ? La progression et les records seront conservés.')) return;
       state.history = [];
-      saveHistory();
+      saveGame();
       renderHistory();
       showToast('Historique effacé.');
+      const progressTitle = $('#progressTitle');
+      progressTitle?.setAttribute('tabindex', '-1');
+      requestAnimationFrame(() => progressTitle?.focus({ preventScroll: true }));
     });
     refs.soundToggle.addEventListener('click', () => {
       state.uiMuted = !state.uiMuted;
       refs.soundToggle.setAttribute('aria-pressed', String(state.uiMuted));
-      refs.soundToggle.setAttribute('aria-label', state.uiMuted ? 'Activer les sons de l’interface' : 'Désactiver les sons de l’interface');
+      saveGame();
       showToast(state.uiMuted ? 'Sons d’interface désactivés' : 'Sons d’interface activés');
     });
 
     $$('.difficulty-control button').forEach((button) => {
       button.addEventListener('click', () => {
         state.difficulty = button.dataset.difficulty;
-        $$('.difficulty-control button').forEach((item) => item.classList.toggle('active', item === button));
+        $$('.difficulty-control button').forEach((item) => {
+          const active = item === button;
+          item.classList.toggle('active', active);
+          item.setAttribute('aria-pressed', String(active));
+        });
+        refs.rivalTarget.textContent = rivalTargetFor(state.currentChallenge);
+        saveGame();
+        renderChallengeCards();
         playUiTone('tap');
       });
     });
@@ -1526,9 +1706,34 @@
     refs.studioForm.addEventListener('submit', (event) => {
       event.preventDefault();
       if (event.submitter?.id === 'createCustomButton') createCustomChallenge();
-      else refs.studioDialog.close();
+      else {
+        state.importId += 1;
+        state.pendingCustom = null;
+        if (state.pendingLogoUrl) URL.revokeObjectURL(state.pendingLogoUrl);
+        state.pendingLogoUrl = null;
+        refs.studioDialog.close();
+      }
     });
 
+    refs.installButton.addEventListener('click', async () => {
+      if (!state.deferredInstallPrompt) return;
+      state.deferredInstallPrompt.prompt();
+      await state.deferredInstallPrompt.userChoice;
+      state.deferredInstallPrompt = null;
+      refs.installButton.hidden = true;
+    });
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      state.deferredInstallPrompt = event;
+      refs.installButton.hidden = false;
+    });
+    window.addEventListener('appinstalled', () => {
+      state.deferredInstallPrompt = null;
+      refs.installButton.hidden = true;
+      showToast('Jingle Duel est installé.');
+    });
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
     window.addEventListener('resize', debounce(drawReferenceWaveform, 120));
     window.addEventListener('beforeunload', () => {
       stopMicrophoneSession();
@@ -1536,7 +1741,7 @@
       if (state.customLogoUrl) URL.revokeObjectURL(state.customLogoUrl);
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && state.mediaRecorder?.state === 'recording') stopRecording();
+      if (document.hidden) cancelActiveAttempt('Essai annulé : la page a été masquée');
     });
   }
 
@@ -1548,18 +1753,41 @@
     };
   }
 
-  function registerServiceWorker() {
+  async function registerServiceWorker() {
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+      try {
+        const registration = await navigator.serviceWorker.register('./service-worker.js');
+        registration.addEventListener('updatefound', () => {
+          const worker = registration.installing;
+          worker?.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              showToast('Mise à jour installée. Elle sera active au prochain chargement.', 5000);
+            }
+          });
+        });
+      } catch {
+        showToast('Le mode hors ligne n’a pas pu être activé.', 4500);
+      }
     }
   }
 
   function initialize() {
+    refs.challengeScreen.hidden = true;
+    refs.homeScreen.hidden = false;
+    refs.soundToggle.setAttribute('aria-pressed', String(state.uiMuted));
+    $$('.difficulty-control button').forEach((button) => {
+      const active = button.dataset.difficulty === state.difficulty;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
     renderChallengeCards();
     renderHistory();
     bindEvents();
+    updateNetworkStatus();
     applyAccent(presets[0].accent);
     state.referenceProfile = buildPresetProfile(presets[0]);
+    refs.rivalName.textContent = presets[0].rival.name;
+    refs.rivalTarget.textContent = rivalTargetFor(presets[0]);
     registerServiceWorker();
   }
 

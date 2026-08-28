@@ -1,51 +1,53 @@
 # Jingle Duel
 
-Application web/PWA locale : un logo et un jingle apparaissent, puis le joueur doit reproduire le jingle au micro. Le résultat est noté sur 100 selon la mélodie, le rythme, la durée et la netteté du signal.
+Jingle Duel est un jeu web/PWA de duel musical. Le joueur écoute un jingle, le reproduit au microphone ou depuis un fichier audio, puis reçoit un score sur 100 fondé sur la mélodie, le rythme, la durée et la netteté du signal.
 
 ## Fonctionnalités
 
-- Trois jingles originaux synthétisés dans le navigateur.
-- Animation de logo synchronisée avec la référence.
-- Compte à rebours et enregistrement micro.
-- Analyse locale : aucune donnée audio n'est envoyée sur un serveur.
-- Score détaillé, rang, conseil personnalisé, record local et historique.
-- Réécoute de l'essai et comparaison A/B.
-- Mode Studio : import d'un jingle audio de 0,7 à 8 secondes et d'un logo facultatif.
-- Difficultés Détente, Normal et Expert.
-- Interface responsive, installable comme PWA et utilisable hors ligne après le premier chargement.
+- Six jingles originaux synthétisés dans le navigateur : Arcade Spark, Cosmic Bloom, Retro Pulse, Neon Strike, Velvet Orbit et Prism Run.
+- Six rivaux avec des objectifs adaptés aux difficultés Détente, Normal et Expert.
+- Animation de scène synchronisée avec la référence, compte à rebours et capture microphone.
+- Repli par fichier audio disponible après l'écoute de la référence lorsque le microphone est absent ou refusé.
+- Analyse locale de la mélodie, du rythme, de la durée et de la netteté ; aucun audio n'est envoyé sur un serveur.
+- Score, rang, métriques détaillées, conseil, réécoute et comparaison A/B.
+- Progression locale : XP, niveaux, victoires, séries, duels, maîtrises, records par jingle et difficulté, et historique des 50 derniers résultats classés.
+- Mode Studio : création d'un duel depuis un jingle audio original de 0,7 à 8 secondes et un logo facultatif.
+- Interface responsive et accessible, installable comme PWA et utilisable hors ligne après un premier chargement en ligne.
 
-## Lancement
+## Lancement local
 
-Le microphone exige une origine sécurisée : `https://` ou `http://localhost`. Il ne faut donc pas ouvrir directement `index.html` en `file://`.
+Node.js 18 ou plus récent est requis. Le microphone exige HTTPS ou une adresse locale sécurisée telle que http://localhost ; ouvrir directement index.html avec le protocole file ne suffit pas.
 
-### Windows
+Sous Windows, double-cliquer sur start.bat. Sous macOS ou Linux, lancer :
 
-1. Installer Node.js 18 ou plus récent.
-2. Double-cliquer sur `start.bat`.
-3. Ouvrir `http://localhost:4173` dans Chrome, Edge, Firefox ou Safari.
-
-### macOS / Linux
-
-```bash
+~~~bash
 ./start.command
-```
+~~~
 
-ou :
+La commande équivalente sur toutes les plateformes est :
 
-```bash
-node server.mjs
-```
+~~~bash
+npm start
+~~~
 
-Puis ouvrir `http://localhost:4173`.
+Le build est généré automatiquement, puis le jeu est servi sur http://127.0.0.1:4173.
+
+## Vérification
+
+~~~bash
+npm test
+~~~
+
+Cette commande reconstruit dist, vérifie la syntaxe JavaScript, puis exécute les tests du moteur audio/scoring et du serveur statique. npm run qa lance le même contrôle complet.
 
 ## Déploiement
 
-Le dossier est entièrement statique. Il peut être déposé tel quel sur Vercel, Netlify, GitHub Pages ou tout hébergement HTTPS. `server.mjs` n'est utile que pour le lancement local.
+Le build statique est produit dans dist. La configuration Vercel exécute la suite complète de tests avant de publier ce dossier.
 
-## Confidentialité
+## Confidentialité et sauvegarde
 
-L'enregistrement et l'analyse sont effectués dans le navigateur avec Web Audio et MediaRecorder. L'audio n'est ni téléversé ni conservé après la fermeture de la page. Seuls les scores et l'historique sont enregistrés dans `localStorage`.
+L'enregistrement, le décodage et l'analyse audio sont effectués dans le navigateur avec Web Audio et MediaRecorder. L'audio n'est ni téléversé ni persisté. La progression, les records, l'historique et les préférences sont sauvegardés uniquement dans localStorage sur l'appareil.
 
 ## Contenus et licences
 
-Les trois jingles intégrés et l'identité « Jingle Duel » sont originaux. Le Studio personnalisé permet d'ajouter des jingles et logos sous licence ou appartenant à l'utilisateur. Aucun logo ou jingle de marque tierce n'est distribué avec le projet.
+Les six jingles intégrés, les rivaux et l'identité « Jingle Duel » sont des créations originales du projet. Le Studio permet d'ajouter des jingles et logos appartenant à l'utilisateur ou qu'il est autorisé à exploiter. Aucun logo, jingle ou média de marque tierce n'est distribué avec le projet. La provenance des ressources intégrées est détaillée dans ASSET_PROVENANCE.md.
